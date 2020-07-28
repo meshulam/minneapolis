@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e -o pipefail
+
+curl 'https://littlesis.org/static/minneapolis.db.gz' | gzip > data/minneapolis.db
