@@ -131,3 +131,4 @@ dmypy.json
 data/csv/
 data/FullPIRequest.zip
 data/minneapolis.db
+data/*_out.csv
