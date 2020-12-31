@@ -34,6 +34,14 @@ def unzip():
 
     shutil.rmtree(temp_dir)
 
+# Some tables have multiple identical rows, remove them before importing
+def dedupe_rows(filename):
+    file_path = os.path.join(DATA_DIR, filename)
+    temp_path = f"{file_path}-temp"
+
+    run(f"sort {file_path} | uniq > {temp_path}")
+    run(f"mv {temp_path} {file_path}")
+
 # fix broken lines in Property Owners:
 # They are errors that invalidate the csvs, found via trial and error
 def fix_property_owners_file():
@@ -50,7 +58,7 @@ def fix_property_owners_file():
 def create_database():
     sql = """
 CREATE TABLE lotinfo(
-  "apn" TEXT,
+  "apn" TEXT PRIMARY KEY,
   "ASSESSOR_USE" TEXT,
   "TYPE" TEXT,
   "LOTSIZE" INTEGER,
@@ -99,6 +107,7 @@ CREATE TABLE property_owner(
   "OWNER_STREETADDRESS" TEXT,
   "OWNER_ADDRESS" TEXT
 );
+CREATE INDEX idx_property_owner_apn ON property_owner(apn);
 
 CREATE TABLE property_taxpayer(
   "apn" TEXT,
@@ -107,10 +116,11 @@ CREATE TABLE property_taxpayer(
   "taxpayerLine3" TEXT,
   "taxpayerLine4" TEXT
 );
+CREATE INDEX idx_property_taxpayer_apn ON property_taxpayer(apn);
 
 CREATE TABLE permit_details(
   "pid" TEXT,
-  "PERMIT" TEXT,
+  "PERMIT" TEXT PRIMARY KEY,
   "ISSUE_YEAR" TEXT,
   "ISSUE_DATE" TEXT,
   "TYPE" TEXT,
@@ -161,6 +171,24 @@ CREATE TABLE valuation_history(
   "TAXABLE_VALUE" NUMERIC
 );
 
+CREATE TABLE apn_permit_link(
+  "apn" TEXT,
+  "PERMIT" TEXT
+);
+CREATE INDEX idx_apn_permit_link_apn ON apn_permit_link(apn);
+CREATE INDEX idx_apn_permit_link_permit ON apn_permit_link(PERMIT);
+
+CREATE TABLE new_units(
+  "apn" TEXT,
+  "issue_date" TEXT,
+  "address" TEXT,
+  "park_fee" NUMERIC,
+  "inferred_building_type" TEXT,
+  "inferred_housing_units" TEXT,
+  "inferred_commercial_units" TEXT,
+  "owner" TEXT
+);
+
 .mode csv
 .separator "|"
 
@@ -173,6 +201,11 @@ CREATE TABLE valuation_history(
 .import data/csv/SaleHistory.txt sale_history
 .import data/csv/RentalHistory.txt rental_history
 .import data/csv/ValuationHistory.txt valuation_history
+.import data/APN_Permit_Link.txt apn_permit_link
+
+.separator ","
+.import data/new_units.csv new_units
+
 
 -- Missing sales price fields loaded as empty strings
 UPDATE sale_history SET SALES_PRICE = null WHERE SALES_PRICE = '';
@@ -186,4 +219,6 @@ if __name__ == '__main__':
 
     unzip()
     fix_property_owners_file()
+    dedupe_rows("PermitDetails.txt")
+    dedupe_rows("LotInfo.txt")
     create_database()
