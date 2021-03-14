@@ -202,10 +202,12 @@ CREATE TABLE new_units(
 .import data/csv/RentalHistory.txt rental_history
 .import data/csv/ValuationHistory.txt valuation_history
 .import data/APN_Permit_Link.txt apn_permit_link
+.import data/csv/PermitFees.txt permit_fees
+.import data/csv/PermitInspections.txt permit_inspections
 
 .separator ","
 .import data/new_units.csv new_units
-
+.import data/Assessors_Parcel_Data_2020.csv
 
 -- Missing sales price fields loaded as empty strings
 UPDATE sale_history SET SALES_PRICE = null WHERE SALES_PRICE = '';

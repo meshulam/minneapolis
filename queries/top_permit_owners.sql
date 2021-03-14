@@ -15,4 +15,4 @@ where permit_details.issue_year >= 2015
   and property_owner.OWNER_NAME IS NOT NULL
 group by property_owner.OWNER_NAME, lotinfo.TYPE
 order by lot_count DESC
-limit 100;
+limit 1000;
